@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org/dtd/mybatis-3-mapper.dtd"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+
+<!-- 충돌 나지 않게 하려고함 -->
+<mapper namespace="com.lastboard.board.mapper.BoardAttachMapper">
+	<!-- 게시 글번호에 따른 첨부파일 가져오기 -->
+	<select id="findByNo" resultType="com.lastboard.board.vo.BoardAttachVO">
+		<![CDATA[
+		select * from tbl_attach where no = #{no}
+		]]>
+	</select>
+	<!-- 스케줄링 으로 어제 지워지지않는 파일 지우기위한 데이터 가져오기 -->
+	<select id="getOldFiles" resultType="com.lastboard.board.vo.BoardAttachVO">
+		<![CDATA[
+		select * from tbl_attach where uploadPath = to_char(sysdate - 1, 'yyyy\mm\dd')
+		]]>
+	</select>
+
+
+	<insert id="insert">
+		insert into tbl_attach(uuid, uploadPath, fileName, fileType, no)
+		values (#{uuid},#{uploadPath},#{fileName},#{fileType},#{no})
+	</insert>
+
+
+	
+	<delete id="delete">
+		delete from tbl_attach
+		where uuid = #{uuid}
+	</delete>
+
+	<delete id="deleteAll">
+		delete from tbl_attach
+		where no = #{no}
+	</delete>
+
+	
+</mapper>
+

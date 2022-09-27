@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.3.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components 
+	 히카리 설정 추가 - 빈으로 객체(class) 생성 / CP를 만들기 위한 설정 : Oracle 접근 정보-->
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+	<!-- property 는 setter를 이용해서 값을 넣는 태그다 -->
+<!-- 		<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/> -->
+<!-- 		<property name="jdbcUrl" value="jdbc:oracle:thin:@localhost:1521:xe"/> -->
+		<!-- log4j2 를 이용하기위해 수정  driverSpy 가 oracle db를 사용하고있어서 이렇게 선언가능
+		oracle 에서만 이렇게 설정할수 있다-->
+		<property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"/>
+		<property name="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@localhost:1521:xe"/>
+		
+		<property name="username" value="lastboard"/>
+		<property name="password" value="lastboard"/>
+	</bean>
+	
+	
+		<!-- destroy 는 커넥션을 다쓰면 자원을 반환하는 메서드 지정시킨다 -->
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+	<!-- 생성자를 이용한 데이터전달(DI)
+	 전달하는 변수 (hikariConfig 를 참조해라) - 위에 hikariConfig 를 사용해(id,pw,....) HikariDataSource를 만든다 -> 
+	 마지막에 close로 닫는다
+	 dataSource 클래스로 생성된다  -->
+		<constructor-arg ref="hikariConfig"/>
+	</bean>
+		
+		
+		<!-- ==========cp===========
+		mybatis-spring 설정
+		hikariCP 만 쓰면 rs.~~, con.~~ 다 써줘야해서 mybatis 사용한다 
+		sqlsessionFactory 안에 sqlSession을 미리 만들어둔 객체를 생성 -->
+		<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+			<!-- setter를 이용한 dataSource 가져와 넣기(DI) -->
+			<property name="dataSource" ref="dataSource"></property>
+		
+		</bean>
+		<!-- dao프로그램 자동생성되게 스캔한다  -->
+		<mybatis-spring:scan base-package="com.lastboard"/>
+		
+		<!-- namespaces 에서 context 를 체크하면 xmlns 에 추가되고 태그 추가가능하다 -->
+		<context:component-scan base-package="com.lastboard"/>
+		
+			<!-- task패키지 빈생성 -->
+	<context:component-scan base-package="com.lastboard" />
+	<!-- task 가 있어야 quartz가 자동으로 처리가 된다 -->
+	<task:annotation-driven/>
+</beans>

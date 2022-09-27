@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org/dtd/mybatis-3-mapper.dtd"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+<mapper  namespace="com.lastboard.board.mapper.BoardMapper">
+<!-- 	//게시판 리스트 -->
+	<select id="list" resultType="com.lastboard.board.vo.BoardVO">
+		<![CDATA[
+		select no, title, writer, writeDate, hit
+		from (
+			select /*+ INDEX_DESC(board pk_board) */
+				rownum rno, no, title, writer, writeDate, hit
+			from board
+		where 
+			]]>
+			<include refid="search"/>
+			<![CDATA[
+			rownum <= #{endRow}
+		)
+		where rno > #{startRow} - 1
+		]]>
+	</select>
+	
+	<select id="getTotalRow" resultType="long">
+		<![CDATA[
+		select count(no) from board
+		where 
+		]]>
+		<include refid="search"/>
+		<![CDATA[
+			no > 0
+		]]>
+	</select>
+
+<!-- 검색을 위한 쿼리 - foreach 안씀 -->
+	<sql id="search">
+		<if test="word != null and !word.equals(''.toString)">
+			<trim prefix="( 1=0" suffix=")and"> 
+			<!-- 문자열에서 특정문자를 포함한경우 true-추가되게 만들었다(List 로 가져오지 않아도 된다) -->
+					
+					<if test="key.contains('t'.toString())">
+					or title like '%' || #{word} ||'%'
+					</if>
+					<if test="key.contains('c'.toString())">
+					or content like '%' || #{word} ||'%'
+					</if>
+					<if test="key.contains('w'.toString())">
+					or writer like '%' || #{word} ||'%'
+					</if>
+			</trim>
+		</if>
+				
+		
+	</sql>
+	
+		
+	<!-- 	//게시판 글보기 -->
+	<select id="view" resultType="com.lastboard.board.vo.BoardVO">
+		select no, title, content,writer, writeDate, hit
+		from board
+		where no = #{no}
+	</select>
+	<update id="increase">
+		update board
+		set hit = hit +1
+		where no = #{no}
+	</update>
+		
+	<!-- 	//게시판 등록 -->
+	<insert id="write">
+			<selectKey keyProperty="no" order="BEFORE" resultType="long">
+			select board_seq.nextval from dual
+		</selectKey>
+		<!-- no를 위에서 가져왔기때문에 바로 쓴다 -->
+		insert into board(no, title, content, writer)
+		values(#{no}, #{title}, #{content}, #{writer})
+	</insert>
+		
+	<!-- 	//게시판 수정 -->
+	<update id="update">
+		update board
+		set title = #{title},
+			content = #{content},
+			writer = #{writer}
+		where no = #{no}
+	
+	</update>
+	
+	<!-- 	//게시판 삭제 -->
+	<delete id="delete">
+		delete from board
+		where no = #{no}
+	</delete>
+
+</mapper>
